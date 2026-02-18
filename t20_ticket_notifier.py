@@ -28,10 +28,8 @@ def parse_event_info(html):
     soup = BeautifulSoup(html, "html.parser")
     title = soup.title.string.strip() if soup.title else "Event"
     text = soup.get_text(separator=" ").lower()
-    # Prices if present
     price_match = re.search(r'(₹|rs|lkr|usd) ?[0-9,.]+', soup.get_text())
     price = price_match.group(0) if price_match else None
-    # Detect availability and describe status
     if re.search(r"\b(buy|book tickets|tickets available|available for booking|filling fast)\b", text):
         status = "Available"
         status_emoji = "✅"
@@ -45,7 +43,6 @@ def parse_event_info(html):
         status_emoji = "❌"
         available = False
     else:
-        # fallback
         status = "Unknown"
         status_emoji = "❔"
         available = False
@@ -64,7 +61,7 @@ def notify_status(context: CallbackContext, info, just_found=False):
             f"🎟️ <b>Tickets FOUND — Available to book!</b>\n"
             f"<b>Event:</b> {info['title']}\n"
             f"<b>Status:</b> {info['status']} {info['status_emoji']}\n"
-            + (f"<b>Price:</b> {info['price']}\n" if info['price'] else "")
+            f"{f'<b>Price:</b> {info[\"price\"]}\n' if info['price'] else ''}"
             f"<a href=\"{info['link']}\">Book Now</a>\n"
             "More info: Tickets are available on BookMyShow."
         )
@@ -73,7 +70,7 @@ def notify_status(context: CallbackContext, info, just_found=False):
             "🚫 <b>No tickets found / Coming soon</b>\n"
             f"<b>Event:</b> {info['title']}\n"
             f"<b>Status:</b> {info['status']} {info['status_emoji']}\n"
-            + (f"<b>Price:</b> {info['price']}\n" if info['price'] else "")
+            f"{f'<b>Price:</b> {info[\"price\"]}\n' if info['price'] else ''}"
             f"<a href=\"{info['link']}\">Check here</a>\n"
             f"More info: {'Event not yet open or sold out.' if info['status'] != 'Unknown' else 'Event not found.'}"
         )
@@ -94,7 +91,6 @@ def check_event_loop(context: CallbackContext):
             info = {"title": "Event", "available": False, "status": "Unknown", "status_emoji": "❔", "link": CURRENT_EVENT_URL, "price": None}
             available = False
 
-        # Only notify on state change
         if available != CURRENT_EVENT_STATE:
             CURRENT_EVENT_STATE = available
             notify_status(context, info, just_found=True)
@@ -141,7 +137,7 @@ def receive_message(update: Update, context: CallbackContext):
         if url.lower().startswith("http"):
             global CURRENT_EVENT_URL, CURRENT_EVENT_STATE
             CURRENT_EVENT_URL = url
-            CURRENT_EVENT_STATE = None  # Reset so notification triggers on new event
+            CURRENT_EVENT_STATE = None
             context.user_data["awaiting_url"] = False
             update.message.reply_text(f"✅ Event updated! Now watching:\n{url}")
         else:
