@@ -170,3 +170,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # ---- Dummy HTTP server for Railway keep-alive ----
+def keepalive_dummy_server():
+    import http.server
+    import socketserver
+    PORT = int(os.getenv("PORT", 8080))
+    Handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print(f"Dummy HTTP server running on port {PORT}")
+        httpd.serve_forever()
+
+if __name__ == "__main__":
+    # Start Telegram bot in a background thread
+    threading.Thread(target=main, daemon=True).start()
+    # Start the dummy HTTP server to keep Railway alive
+    keepalive_dummy_server()
